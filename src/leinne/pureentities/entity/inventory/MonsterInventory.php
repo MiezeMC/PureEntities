@@ -8,7 +8,7 @@ use leinne\pureentities\entity\Monster;
 use pocketmine\inventory\BaseInventory;
 use pocketmine\item\Item;
 
-class MonsterInventory extends BaseInventory
+abstract class MonsterInventory extends BaseInventory
 {
 
     protected Monster $holder;
@@ -29,5 +29,4 @@ class MonsterInventory extends BaseInventory
     public function getHolder() : Monster{
         return $this->holder;
     }
-
 }

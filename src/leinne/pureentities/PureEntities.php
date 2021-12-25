@@ -242,7 +242,7 @@ class PureEntities extends PluginBase implements Listener
             $packet->trData->getActionType() === UseItemOnEntityTransactionData::ACTION_INTERACT
         ){
             $player = $event->getOrigin()->getPlayer();
-            $entity = $player->getWorld()->getEntity($packet->trData->getEntityRuntimeId());
+            $entity = $player->getWorld()->getEntity($packet->trData->getActorRuntimeId());
             if(($entity instanceof LivingBase || $entity instanceof Vehicle) && !$entity->isClosed()){
                 $event->cancel();
                 $item = $player->getInventory()->getItemInHand();
@@ -262,7 +262,7 @@ class PureEntities extends PluginBase implements Listener
             }
         }elseif($packet instanceof MoveActorAbsolutePacket){
             $player = $event->getOrigin()->getPlayer();
-            $entity = $player->getWorld()->getEntity($packet->entityRuntimeId);
+            $entity = $player->getWorld()->getEntity($packet->actorRuntimeId);
             if($entity instanceof Vehicle && !$entity->isClosed() && $entity->getRider() === $player){
                 $event->cancel();
                 //[xRot, yRot, zRot] = [pitch, headYaw, yaw]

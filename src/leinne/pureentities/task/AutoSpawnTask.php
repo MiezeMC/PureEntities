@@ -30,7 +30,7 @@ class AutoSpawnTask extends Task
                 continue;
             }
 
-            if (in_array($player->getWorld()->getFolderName(), PureEntities::getInstance()->getConfig()->get("worlds", []))) {
+            if (is_array(PureEntities::getInstance()->getConfig()->get("worlds", [])) && in_array($player->getWorld()->getFolderName(), PureEntities::getInstance()->getConfig()->get("worlds", []))) {
 
                 $radX = mt_rand(3, 24);
                 $radZ = mt_rand(3, 24);

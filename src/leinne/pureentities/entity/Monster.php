@@ -18,6 +18,7 @@ use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\MobEquipmentPacket;
 use pocketmine\network\mcpe\protocol\types\inventory\ContainerIds;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
+use pocketmine\network\mcpe\protocol\types\inventory\WindowTypes;
 use pocketmine\player\Player;
 use pocketmine\Server;
 
@@ -190,7 +191,7 @@ abstract class Monster extends LivingBase{
     protected function sendSpawnPacket(Player $player) : void{
         parent::sendSpawnPacket($player);
 
-        $player->getNetworkSession()->sendDataPacket(MobEquipmentPacket::create($this->id, ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->inventory->getItemInHand())), 0, ContainerIds::INVENTORY));
+        $player->getNetworkSession()->sendDataPacket(MobEquipmentPacket::create($this->id, ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->inventory->getItemInHand())), 0, ContainerIds::INVENTORY, WindowTypes::INVENTORY));
     }
 
     public function saveNBT() : CompoundTag{

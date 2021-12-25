@@ -12,7 +12,8 @@ use pocketmine\block\Block;
 use pocketmine\entity\Entity;
 use pocketmine\item\ItemFactory;
 use pocketmine\network\mcpe\protocol\LevelEventPacket;
-use pocketmine\world\particle\DestroyBlockParticle;
+use pocketmine\network\mcpe\protocol\types\LevelEvent;
+use pocketmine\world\particle\BlockBreakParticle;
 use pocketmine\world\Position;
 use pocketmine\world\sound\DoorBumpSound;
 use pocketmine\world\sound\DoorCrashSound;
@@ -101,8 +102,8 @@ trait WalkEntityTrait{
         }
 
         if($door && !$this->checkDoorState && $this->doorBlock !== null){
-            $pos = $this->doorBlock->getPos();
-            $pos->world->broadcastPacketToViewers($pos, LevelEventPacket::create(LevelEventPacket::EVENT_BLOCK_STOP_BREAK, 0, $pos));
+            $pos = $this->doorBlock->getPosition();
+            $pos->world->broadcastPacketToViewers($pos, LevelEventPacket::create(LevelEvent::BLOCK_STOP_BREAK, 0, $pos));
             $this->doorBlock = null;
         }
 
@@ -132,9 +133,9 @@ trait WalkEntityTrait{
         if($delay > 0 && $this->checkDoorState){
             $delay = -1;
             if($this->doorBlock !== null){
-                $pos = $this->doorBlock->getPos();
+                $pos = $this->doorBlock->getPosition();
                 if($this->doorBreakTime === 180){
-                    $pos->world->broadcastPacketToViewers($pos, LevelEventPacket::create(LevelEventPacket::EVENT_BLOCK_START_BREAK, 364, $pos));
+                    $pos->world->broadcastPacketToViewers($pos, LevelEventPacket::create(LevelEvent::BLOCK_START_BREAK, 364, $pos));
                 }
 
                 if($this->doorBreakTime % mt_rand(3, 20) === 0){
@@ -144,7 +145,7 @@ trait WalkEntityTrait{
                 if(--$this->doorBreakTime <= 0){
                     $this->doorBlock->onBreak(ItemFactory::air());
                     $pos->world->addSound($pos, new DoorCrashSound());
-                    $pos->world->addParticle($pos->add(0.5, 0.5, 0.5), new DestroyBlockParticle($this->doorBlock));
+                    $pos->world->addParticle($pos->add(0.5, 0.5, 0.5), new BlockBreakParticle($this->doorBlock));
                 }
             }
         }

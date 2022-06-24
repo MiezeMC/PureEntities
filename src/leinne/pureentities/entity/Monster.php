@@ -22,7 +22,8 @@ use pocketmine\network\mcpe\protocol\types\inventory\WindowTypes;
 use pocketmine\player\Player;
 use pocketmine\Server;
 
-abstract class Monster extends LivingBase{
+abstract class Monster extends LivingBase
+{
 
     protected MonsterInventory $inventory;
 

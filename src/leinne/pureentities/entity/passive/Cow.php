@@ -8,10 +8,13 @@ use leinne\pureentities\entity\Animal;
 use leinne\pureentities\entity\ai\walk\WalkEntityTrait;
 use pocketmine\entity\Entity;
 use pocketmine\entity\EntitySizeInfo;
+use pocketmine\item\Bucket;
+use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
 use pocketmine\item\ItemIds;
 use pocketmine\item\VanillaItems;
 use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
+use pocketmine\player\Player;
 
 class Cow extends Animal{
     use WalkEntityTrait;
@@ -43,6 +46,15 @@ class Cow extends Animal{
 
         // TODO: 동물 AI 기능
         return false;
+    }
+
+    public function interact(Player $player, Item $item): bool
+    {
+        if ($item instanceof Bucket && !$this->isBaby()) {
+            $item->pop();
+            $player->getInventory()->addItem(VanillaItems::MILK_BUCKET());
+        }
+        return true;
     }
 
     public function getDrops() : array{

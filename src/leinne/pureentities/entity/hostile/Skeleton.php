@@ -6,6 +6,7 @@ namespace leinne\pureentities\entity\hostile;
 
 use leinne\pureentities\entity\Monster;
 use leinne\pureentities\entity\ai\walk\WalkEntityTrait;
+use pocketmine\block\Air;
 use pocketmine\entity\EntitySizeInfo;
 use pocketmine\entity\Location;
 use pocketmine\entity\projectile\Arrow;
@@ -21,9 +22,12 @@ use pocketmine\item\VanillaItems;
 use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
 use pocketmine\world\sound\LaunchSound;
 use pocketmine\nbt\tag\CompoundTag;
+use function mt_rand;
 
 class Skeleton extends Monster{
-    use WalkEntityTrait;
+    use WalkEntityTrait {
+        entityBaseTick as baseTick;
+    }
 
     public static function getNetworkTypeId() : string{
         return EntityIds::SKELETON;
@@ -129,9 +133,14 @@ class Skeleton extends Monster{
     }
 
     public function getDrops() : array{
+        $bow = VanillaItems::BOW()
+        ->setDamage(20, 100)
+        ->setCount(0);
+        if (mt_rand(0, 12) == 6) $bow->setCount(1);
         return [
             VanillaItems::BONE()->setCount(mt_rand(0, 2)),
             VanillaItems::ARROW()->setCount(mt_rand(0, 2)),
+            $bow
         ];
     }
 
@@ -139,4 +148,17 @@ class Skeleton extends Monster{
         return 5;
     }
 
+    protected function entityBaseTick(int $tickDiff = 1): bool
+    {
+        $hasUpdate = false;
+
+        $time = $this->getWorld()->getTime();
+        $loc = $this->getLocation();
+        if ($time > 0 && $time < 12000 && !$this->isOnFire() && $this->getWorld()->getBlockAt($loc->getFloorX(), $loc->getFloorY() + 1, $loc->getFloorZ()) instanceof Air && !$this->isUnderwater()) {
+            $this->setOnFire(1);
+            $hasUpdate = true;
+        }
+
+        return $this->baseTick($tickDiff) || $hasUpdate;
+    }
 }

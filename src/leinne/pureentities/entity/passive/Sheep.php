@@ -14,6 +14,7 @@ use pocketmine\block\VanillaBlocks;
 use pocketmine\data\bedrock\DyeColorIdMap;
 use pocketmine\entity\Entity;
 use pocketmine\entity\EntitySizeInfo;
+use pocketmine\item\Dye;
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
 use pocketmine\item\ItemIds;
@@ -24,6 +25,7 @@ use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataCollection;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties;
 use pocketmine\player\Player;
+use function mt_rand;
 
 class Sheep extends Animal{
     use WalkEntityTrait{
@@ -73,6 +75,7 @@ class Sheep extends Animal{
 
     public function setColor(DyeColor $color){
         $this->color = $color;
+        $this->getNetworkProperties()->setByte(EntityMetadataProperties::COLOR, DyeColorIdMap::getInstance()->toId($this->color));
     }
 
     public function isSheared() : bool{
@@ -81,14 +84,21 @@ class Sheep extends Animal{
 
     public function setSheared(bool $sheared) : void{
         $this->sheared = $sheared;
+        $this->getNetworkProperties()->setGenericFlag(EntityMetadataFlags::SHEARED, $this->sheared);
     }
 
     public function interact(Player $player, Item $item) : bool{
         if($item instanceof Shears && !$this->sheared){
             $item->applyDamage(1);
-            $this->sheared = true;
+            $this->setSheared(true);
             $this->getWorld()->addSound($this->location, new ShearSound());
             $this->getWorld()->dropItem($this->location, ItemFactory::getInstance()->get(ItemIds::WOOL, DyeColorIdMap::getInstance()->toId($this->color), mt_rand(1, 3)));
+            return true;
+        }
+        if ($item instanceof Dye) {
+            if ($item->getColor()->name() == $this->getColor()->name()) return true;
+            $this->setColor($item->getColor());
+            $item->pop();
             return true;
         }
         return false;
@@ -105,7 +115,7 @@ class Sheep extends Animal{
             if($this->eatDelay <= 0){
                 $hasUpdate = true;
                 $this->setSpeed(1.0);
-                $this->sheared = false;
+                $this->setSheared(false);
                 $this->getWorld()->setBlockAt((int) floor($this->location->x), (int) floor($this->location->y - 1), (int) floor($this->location->z), VanillaBlocks::DIRT());
             }
         }elseif(
@@ -146,9 +156,10 @@ class Sheep extends Animal{
         return $nbt;
     }
 
-    public function getDrops() : array{
+    public function getDrops() : array
+    {
         return [
-            ItemFactory::getInstance()->get(ItemIds::WOOL, DyeColorIdMap::getInstance()->toId($this->color), 1),
+            ItemFactory::getInstance()->get(ItemIds::WOOL, DyeColorIdMap::getInstance()->toId($this->color), ($this->isSheared() ? 0 : mt_rand(1, 2))),
             ItemFactory::getInstance()->get($this->isOnFire() ? ItemIds::COOKED_MUTTON : ItemIds::RAW_MUTTON, 0, mt_rand(1, 2))
         ];
     }

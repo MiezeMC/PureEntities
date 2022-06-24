@@ -6,6 +6,7 @@ namespace leinne\pureentities\entity\hostile;
 
 use leinne\pureentities\entity\Monster;
 use leinne\pureentities\entity\ai\walk\WalkEntityTrait;
+use pocketmine\block\Air;
 use pocketmine\entity\Ageable;
 use pocketmine\entity\animation\ArmSwingAnimation;
 use pocketmine\entity\EntitySizeInfo;
@@ -16,9 +17,13 @@ use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataCollection;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags;
+use function round;
+use function var_dump;
 
 class Zombie extends Monster implements Ageable{
-    use WalkEntityTrait;
+    use WalkEntityTrait {
+        entityBaseTick as baseTick;
+    }
 
     protected bool $baby = false;
 
@@ -40,7 +45,7 @@ class Zombie extends Monster implements Ageable{
         }
 
         $this->setSpeed(0.9);
-        $this->setDamages([0, 2.5, 3, 4.5]);
+        $this->setDamages([0, 1.5, 2.5, 3]);
     }
 
     public function getName() : string{
@@ -60,6 +65,7 @@ class Zombie extends Monster implements Ageable{
             $this->broadcastAnimation(new ArmSwingAnimation($this));
 
             $target = $this->getTargetEntity();
+            var_dump($this->getResultDamage());
             $ev = new EntityDamageByEntityEvent($this, $target, EntityDamageEvent::CAUSE_ENTITY_ATTACK, $this->getResultDamage());
             $target->attack($ev);
 
@@ -110,5 +116,19 @@ class Zombie extends Monster implements Ageable{
             return 12;
         }
         return 5;
+    }
+
+    protected function entityBaseTick(int $tickDiff = 1): bool
+    {
+        $hasUpdate = false;
+
+        $time = $this->getWorld()->getTime();
+        $loc = $this->getPosition();
+        if ($time > 0 && $time < 12000 && !$this->isOnFire() && $this->getWorld()->getBlockAt($loc->getFloorX(), $loc->getFloorY() + 1, $loc->getFloorZ()) instanceof Air && !$this->isUnderwater()) {
+            $this->setOnFire(1);
+            $hasUpdate = true;
+        }
+
+        return $this->baseTick($tickDiff) || $hasUpdate;
     }
 }

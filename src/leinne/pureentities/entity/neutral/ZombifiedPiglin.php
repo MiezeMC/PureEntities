@@ -6,6 +6,7 @@ namespace leinne\pureentities\entity\neutral;
 
 use leinne\pureentities\entity\Monster;
 use leinne\pureentities\entity\ai\walk\WalkEntityTrait;
+use pocketmine\block\Air;
 use pocketmine\entity\Ageable;
 use pocketmine\entity\animation\ArmSwingAnimation;
 use pocketmine\entity\Entity;
@@ -90,7 +91,16 @@ class ZombifiedPiglin extends Monster implements Ageable{
             //--$this->angry;
         }
 
-        return $this->baseTick($tickDiff);
+        $hasUpdate = false;
+
+        $time = $this->getWorld()->getTime();
+        $loc = $this->getLocation();
+        if ($time > 0 && $time < 12000 && !$this->isOnFire() && $this->getWorld()->getBlockAt($loc->getFloorX(), $loc->getFloorY() + 1, $loc->getFloorZ()) instanceof Air && !$this->isUnderwater()) {
+            $this->setOnFire(1);
+            $hasUpdate = true;
+        }
+
+        return $this->baseTick($tickDiff) || $hasUpdate;
     }
 
     public function interactTarget() : bool{
@@ -160,5 +170,4 @@ class ZombifiedPiglin extends Monster implements Ageable{
         }
         return 5;
     }
-
 }

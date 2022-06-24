@@ -4,23 +4,31 @@ declare(strict_types=1);
 
 namespace leinne\pureentities;
 
+use leinne\pureentities\commands\SummonCommand;
 use leinne\pureentities\entity\ai\path\astar\AStarPathFinder;
 use leinne\pureentities\entity\LivingBase;
+use leinne\pureentities\entity\neutral\CaveSpider;
 use leinne\pureentities\entity\neutral\IronGolem;
+use leinne\pureentities\entity\neutral\PolarBear;
 use leinne\pureentities\entity\neutral\ZombifiedPiglin;
 use leinne\pureentities\entity\neutral\Spider;
 use leinne\pureentities\entity\passive\Chicken;
 use leinne\pureentities\entity\passive\Cow;
 use leinne\pureentities\entity\passive\Mooshroom;
 use leinne\pureentities\entity\passive\Pig;
+use leinne\pureentities\entity\passive\Rabbit;
 use leinne\pureentities\entity\passive\Sheep;
 use leinne\pureentities\entity\hostile\Creeper;
 use leinne\pureentities\entity\hostile\Skeleton;
 use leinne\pureentities\entity\hostile\Zombie;
 use leinne\pureentities\entity\passive\SnowGolem;
 use leinne\pureentities\event\EntityInteractByPlayerEvent;
+use leinne\pureentities\item\SpawnEgg;
 use leinne\pureentities\task\AutoSpawnTask;
 use leinne\pureentities\entity\Vehicle;
+use MyPlot\MyPlot;
+use MyPlot\Plot;
+use pocketmine\block\Block;
 use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\data\bedrock\EntityLegacyIds;
@@ -35,10 +43,12 @@ use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\event\server\DataPacketReceiveEvent;
+use pocketmine\inventory\CreativeInventory;
+use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
 use pocketmine\item\ItemIdentifier;
 use pocketmine\item\ItemIds;
-use pocketmine\item\SpawnEgg;
+use pocketmine\item\ItemUseResult;
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\AnimatePacket;
 use pocketmine\network\mcpe\protocol\InteractPacket;
@@ -48,16 +58,23 @@ use pocketmine\network\mcpe\protocol\PlayerInputPacket;
 use pocketmine\network\mcpe\protocol\types\inventory\UseItemOnEntityTransactionData;
 use pocketmine\math\Facing;
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\TextFormat;
 use pocketmine\world\World;
+use function mt_rand;
 
 class PureEntities extends PluginBase implements Listener
 {
     use SingletonTrait;
 
     public static bool $enableAstar = true;
+
+    /**
+     * @var SpawnEgg[]
+     */
+    public static array $spawnEggs;
 
     protected function onLoad(): void
     {
@@ -104,78 +121,156 @@ class PureEntities extends PluginBase implements Listener
         $entityFactory->register(Sheep::class, function(World $world, CompoundTag $nbt) : Sheep{
             return new Sheep(EntityDataHelper::parseLocation($nbt, $world), $nbt);
         }, ["Sheep", "minecraft:sheep"]);
+        $entityFactory->register(Rabbit::class, function(World $world, CompoundTag $nbt) : Rabbit{
+            return new Rabbit(EntityDataHelper::parseLocation($nbt, $world), $nbt);
+        }, ["Rabbit", "minecraft:rabbit"]);
         $entityFactory->register(SnowGolem::class, function(World $world, CompoundTag $nbt) : SnowGolem{
             return new SnowGolem(EntityDataHelper::parseLocation($nbt, $world), $nbt);
         }, ["SnowGolem", "minecraft:snow_golem"]);
+        $entityFactory->register(PolarBear::class, function(World $world, CompoundTag $nbt) : PolarBear{
+            return new PolarBear(EntityDataHelper::parseLocation($nbt, $world), $nbt);
+        }, ["PolarBear", "minecraft:polar_bear"]);
+        $entityFactory->register(CaveSpider::class, function(World $world, CompoundTag $nbt) : CaveSpider{
+            return new CaveSpider(EntityDataHelper::parseLocation($nbt, $world), $nbt);
+        }, ["CaveSpider", "minecraft:cave_spider"]);
 
         //BlockFactory::register(new block\MonsterSpawner(new BlockIdentifier(BlockLegacyIds::MOB_SPAWNER, 0, null, tile\MonsterSpawner::class), "Monster Spawner"), true);
 
         $itemFactory = ItemFactory::getInstance();
         /** Register hostile */
-        $itemFactory->register(new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::CREEPER), "Creeper Spawn Egg") extends SpawnEgg{
+        /*$itemFactory->register(new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::CREEPER), "Creeper Spawn Egg") extends SpawnEgg{
             protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
                 return new Creeper(Location::fromObject($pos, $world, $yaw, $pitch));
             }
-        }, true);
-        $itemFactory->register(new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::SKELETON), "Skeleton Spawn Egg") extends SpawnEgg{
+        }, true);*/
+        $itemFactory->register(($skeleton = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::SKELETON), "Skeleton Spawn Egg") extends SpawnEgg{
             protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
                 return new Skeleton(Location::fromObject($pos, $world, $yaw, $pitch));
             }
-        }, true);
-        $itemFactory->register(new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::ZOMBIE), "Zombie Spawn Egg") extends SpawnEgg{
+        }), true);
+        self::$spawnEggs[$skeleton->getMeta()] = $skeleton;
+        $itemFactory->register(($zombie = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::ZOMBIE), "Zombie Spawn Egg") extends SpawnEgg{
             protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
                 return new Zombie(Location::fromObject($pos, $world, $yaw, $pitch));
             }
-        }, true);
-
+        }), true);
+        self::$spawnEggs[$zombie->getMeta()] = $zombie;
         /** Register neutral */
-        $itemFactory->register(new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::IRON_GOLEM), "IronGolem Spawn Egg") extends SpawnEgg{
+        $itemFactory->register(($ironGolem = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::IRON_GOLEM), "IronGolem Spawn Egg") extends SpawnEgg{
             protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
                 return new IronGolem(Location::fromObject($pos, $world, $yaw, $pitch));
             }
-        }, true);
-        $itemFactory->register(new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::ZOMBIE_PIGMAN), "ZombifiedPiglin Spawn Egg") extends SpawnEgg{
+        }), true);
+        self::$spawnEggs[$ironGolem->getMeta()] = $ironGolem;
+        $itemFactory->register(($zombiefiedPiglin = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::ZOMBIE_PIGMAN), "ZombifiedPiglin Spawn Egg") extends SpawnEgg{
             protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
                 return new ZombifiedPiglin(Location::fromObject($pos, $world, $yaw, $pitch));
             }
-        }, true);
-        $itemFactory->register(new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::SPIDER), "Spider Spawn Egg") extends SpawnEgg{
+        }), true);
+        self::$spawnEggs[$zombiefiedPiglin->getMeta()] = $zombiefiedPiglin;
+        $itemFactory->register(($spider = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::SPIDER), "Spider Spawn Egg") extends SpawnEgg{
             protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
                 return new Spider(Location::fromObject($pos, $world, $yaw, $pitch));
             }
-        }, true);
+        }), true);
+        self::$spawnEggs[$spider->getMeta()] = $spider;
 
         /** Register passive */
-        $itemFactory->register(new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::CHICKEN), "Chicken Spawn Egg") extends SpawnEgg{
+        /*$this->registerSpawnegg(Chicken::class, EntityLegacyIds::CHICKEN, "Chicken");
+        $this->registerSpawnegg(Cow::class, EntityLegacyIds::COW, "Cow");
+        $this->registerSpawnegg(Mooshroom::class, EntityLegacyIds::MOOSHROOM, "Mooshroom");
+        $this->registerSpawnegg(Pig::class, EntityLegacyIds::PIG, "Pig");
+        $this->registerSpawnegg(Sheep::class, EntityLegacyIds::SHEEP, "Sheep");
+        $this->registerSpawnegg(SnowGolem::class, EntityLegacyIds::SNOW_GOLEM, "Snow Golem");
+        $this->registerSpawnegg(IronGolem::class, EntityLegacyIds::IRON_GOLEM, "Iron Golem");
+        $this->registerSpawnegg(Zombie::class, EntityLegacyIds::ZOMBIE, "Zombie");
+        $this->registerSpawnegg(Spider::class, EntityLegacyIds::SPIDER, "Spider");
+        $this->registerSpawnegg(Skeleton::class, EntityLegacyIds::SKELETON, "Skeleton");
+        $this->registerSpawnegg(ZombifiedPiglin::class, EntityLegacyIds::ZOMBIE_PIGMAN, "Zombie Piglin");*/
+
+        $itemFactory->register(($chicken = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::CHICKEN), "Chicken Spawn Egg") extends SpawnEgg{
             protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
                 return new Chicken(Location::fromObject($pos, $world, $yaw, $pitch));
             }
-        }, true);
-        $itemFactory->register(new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::COW), "Cow Spawn Egg") extends SpawnEgg{
+        }), true);
+        self::$spawnEggs[$chicken->getMeta()] = $chicken;
+        $itemFactory->register(($cow = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::COW), "Cow Spawn Egg") extends SpawnEgg{
             protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
                 return new Cow(Location::fromObject($pos, $world, $yaw, $pitch));
             }
-        }, true);
-        $itemFactory->register(new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::MOOSHROOM), "Mooshroom Spawn Egg") extends SpawnEgg{
+        }), true);
+        self::$spawnEggs[$cow->getMeta()] = $cow;
+        $itemFactory->register(($mooshroom = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::MOOSHROOM), "Mooshroom Spawn Egg") extends SpawnEgg{
             protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
-                return new Mooshroom(Location::fromObject($pos, $world, $yaw, $pitch));
+                return new Mooshroom(Location::fromObject($pos, $world, $yaw, $pitch), null, (mt_rand(0, 2) == 1 ? Mooshroom::TYPE_BROWN : Mooshroom::TYPE_RED));
             }
-        }, true);
-        $itemFactory->register(new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::PIG), "Pig Spawn Egg") extends SpawnEgg{
+        }), true);
+        self::$spawnEggs[$mooshroom->getMeta()] = $mooshroom;
+        $itemFactory->register(($pig = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::PIG), "Pig Spawn Egg") extends SpawnEgg{
             protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
                 return new Pig(Location::fromObject($pos, $world, $yaw, $pitch));
             }
-        }, true);
-        $itemFactory->register(new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::SHEEP), "Sheep Spawn Egg") extends SpawnEgg{
+        }), true);
+        self::$spawnEggs[$pig->getMeta()] = $pig;
+        $itemFactory->register(($sheep = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::SHEEP), "Sheep Spawn Egg") extends SpawnEgg{
             protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
                 return new Sheep(Location::fromObject($pos, $world, $yaw, $pitch));
             }
-        }, true);
-        $itemFactory->register(new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::SNOW_GOLEM), "SnowGolem Spawn Egg") extends SpawnEgg{
+        }), true);
+        self::$spawnEggs[$sheep->getMeta()] = $sheep;
+        $itemFactory->register(($snowGolem = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::SNOW_GOLEM), "SnowGolem Spawn Egg") extends SpawnEgg{
             protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
                 return new SnowGolem(Location::fromObject($pos, $world, $yaw, $pitch));
             }
-        }, true);
+        }), true);
+        self::$spawnEggs[$snowGolem->getMeta()] = $snowGolem;
+        $itemFactory->register(($rabbit = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::RABBIT), "Rabbit Spawn Egg") extends SpawnEgg{
+            protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
+                return new Rabbit(Location::fromObject($pos, $world, $yaw, $pitch));
+            }
+        }), true);
+        self::$spawnEggs[$rabbit->getMeta()] = $rabbit;
+        $itemFactory->register(($polarBear = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::POLAR_BEAR), "Polar Bear Spawn Egg") extends SpawnEgg{
+            protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
+                return new PolarBear(Location::fromObject($pos, $world, $yaw, $pitch));
+            }
+        }), true);
+        self::$spawnEggs[$polarBear->getMeta()] = $polarBear;
+        $itemFactory->register(($caveSpider = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::CAVE_SPIDER), "Cave Spider Spawn Egg") extends SpawnEgg{
+            protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
+                return new CaveSpider(Location::fromObject($pos, $world, $yaw, $pitch));
+            }
+        }), true);
+        self::$spawnEggs[$caveSpider->getMeta()] = $caveSpider;
+
+        $creaInv = CreativeInventory::getInstance();
+        $creaInv->remove($skeleton);
+        $creaInv->remove($zombie);
+        $creaInv->remove($ironGolem);
+        $creaInv->remove($zombiefiedPiglin);
+        $creaInv->remove($chicken);
+        $creaInv->remove($cow);
+        $creaInv->remove($mooshroom);
+        $creaInv->remove($pig);
+        $creaInv->remove($sheep);
+        $creaInv->remove($snowGolem);
+        $creaInv->remove($rabbit);
+        $creaInv->remove($polarBear);
+        $creaInv->remove($caveSpider);
+
+        $creaInv->add($skeleton);
+        $creaInv->add($zombie);
+        $creaInv->add($ironGolem);
+        $creaInv->add($zombiefiedPiglin);
+        $creaInv->add($chicken);
+        $creaInv->add($cow);
+        $creaInv->add($mooshroom);
+        $creaInv->add($pig);
+        $creaInv->add($sheep);
+        $creaInv->add($snowGolem);
+        $creaInv->add($rabbit);
+        $creaInv->add($polarBear);
+        $creaInv->add($caveSpider);
 
         $this->saveDefaultConfig();
         $data = $this->getConfig()->getAll();
@@ -190,7 +285,7 @@ class PureEntities extends PluginBase implements Listener
             AStarPathFinder::setData((int) ($data["astar"]["maximum-tick"] ?? 150), (int) ($data["astar"]["block-per-tick"] ?? 70));
         }
 
-        $this->getServer()->getLogger()->info(
+        /*$this->getServer()->getLogger()->info(
             TextFormat::AQUA . "\n" .
             "---------------------------------------------------------\n" .
             " _____                _____       _    _ _    _\n" .
@@ -200,9 +295,10 @@ class PureEntities extends PluginBase implements Listener
             "| |   | |_| | | |  __/ |___| | | | |__| | |__| |  __/\__ \\\n" .
             "|_|    \__,_|_|  \___|_____|_| |_|\___|_|\___|_|\___||___/\n" .
             "----------------------------------------------------------\n"
-        );
+        );*/
 
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
+        $this->getServer()->getCommandMap()->register("PureEntities", new SummonCommand());
     }
 
     public function onPlayerQuitEvent(PlayerQuitEvent $event) : void{
@@ -372,6 +468,25 @@ class PureEntities extends PluginBase implements Listener
                 }
             }
         }
+    }
+
+    protected function registerSpawnegg(string $entityClass, int $entityId, string $entityName): void
+    {
+        ItemFactory::getInstance()->register($item = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, $entityId, $entityName . " Spawn Egg", $entityClass)) extends SpawnEgg {
+
+            public function __construct(ItemIdentifier $identifier, string $name = "Unknown", private string $namespace = "")
+            {
+                parent::__construct($identifier, $name);
+            }
+
+            protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch): Entity
+            {
+                return new $this->namespace(Location::fromObject($pos, $world, $yaw, $pitch));
+            }
+        }, true);
+
+        if(!CreativeInventory::getInstance()->contains($item))
+            CreativeInventory::getInstance()->add($item);
     }
 
     //TODO: check golem block shape

@@ -7,3 +7,11 @@ load: STARTUP
 author: LeinneSW
 description: Implement all MCBE entities
 website: https://github.com/LeinneSW/PureEntities
+
+permissions:
+  summon.cmd:
+    description: Command permission
+    default: op
+  mmc.mobs:
+    description: Gameplay permission
+    default: op

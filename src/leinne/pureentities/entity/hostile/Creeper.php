@@ -109,6 +109,8 @@ class Creeper extends Monster implements Explosive{
     }
 
     public function explode() : void{
+        return; //deactivated
+
         $ev = new ExplosionPrimeEvent($this, $this->force);
         $ev->call();
 

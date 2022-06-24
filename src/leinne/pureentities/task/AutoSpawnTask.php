@@ -7,6 +7,7 @@ namespace leinne\pureentities\task;
 use leinne\pureentities\entity\hostile\Creeper;
 use leinne\pureentities\entity\hostile\Skeleton;
 use leinne\pureentities\entity\hostile\Zombie;
+use leinne\pureentities\entity\neutral\CaveSpider;
 use leinne\pureentities\entity\neutral\IronGolem;
 use leinne\pureentities\entity\neutral\Spider;
 use leinne\pureentities\entity\neutral\ZombifiedPiglin;
@@ -14,8 +15,10 @@ use leinne\pureentities\entity\passive\Chicken;
 use leinne\pureentities\entity\passive\Cow;
 use leinne\pureentities\entity\passive\Mooshroom;
 use leinne\pureentities\entity\passive\Pig;
+use leinne\pureentities\entity\passive\Rabbit;
 use leinne\pureentities\entity\passive\Sheep;
 use leinne\pureentities\PureEntities;
+use pocketmine\data\bedrock\BiomeIds;
 use pocketmine\entity\Location;
 use pocketmine\scheduler\Task;
 use pocketmine\Server;
@@ -38,9 +41,17 @@ class AutoSpawnTask extends Task
                 $pos->y = $player->getWorld()->getHighestBlockAt($pos->x += mt_rand(0, 1) ? $radX : -$radX, $pos->z += mt_rand(0, 1) ? $radZ : -$radZ) + 1;
 
                 $entityClasses = [
-                    [Cow::class, Pig::class, Sheep::class, Chicken::class, Mooshroom::class, IronGolem::class],//, "Slime", "Wolf", "Ocelot", "Mooshroom", "Rabbit", "IronGolem", "SnowGolem"],
-                    [Zombie::class, Creeper::class, Skeleton::class, Spider::class, ZombifiedPiglin::class]//, "Enderman", "CaveSpider", "MagmaCube", "ZombieVillager", "Ghast", "Blaze"]
+                    [Cow::class, Pig::class, Sheep::class, Chicken::class, Mooshroom::class, IronGolem::class, Mooshroom::class, Rabbit::class],//, "Slime", "Wolf", "Ocelot", "Rabbit"],
+                    [Zombie::class, Creeper::class, Skeleton::class, Spider::class, CaveSpider::class, ZombifiedPiglin::class]//, "Enderman", "CaveSpider", "MagmaCube", "ZombieVillager", "Ghast", "Blaze"]
                 ];
+
+                /*if (($chunk = $player->getWorld()->getOrLoadChunkAtPosition($pos))) {
+                    $biome = $chunk->getBiomeId($pos->getFloorX(), $pos->getFloorZ());
+                    if ($biome === BiomeIds::FOREST_HILLS || $biome === BiomeIds::ICE_MOUNTAINS || $biome === BiomeIds::TAIGA) {
+                        $entity = new CaveSpider(Location::fromObject($pos, $player->getWorld()));
+                    } else $entity = new $entityClasses[mt_rand(0, 1)][mt_rand(0, 4)](Location::fromObject($pos, $player->getWorld()));
+                } else $entity = new $entityClasses[mt_rand(0, 1)][mt_rand(0, 4)](Location::fromObject($pos, $player->getWorld()));*/
+
                 $entity = new $entityClasses[mt_rand(0, 1)][mt_rand(0, 4)](Location::fromObject($pos, $player->getWorld()));
                 $entity->spawnToAll();
             }

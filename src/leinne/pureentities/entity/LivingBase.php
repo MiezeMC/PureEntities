@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace leinne\pureentities\entity;
 
 use leinne\pureentities\entity\ai\navigator\EntityNavigator;
+use MyPlot\MyPlot;
 use pocketmine\entity\Entity;
 use pocketmine\entity\Living;
 use pocketmine\item\Item;
+use pocketmine\item\ItemIds;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\FloatTag;
@@ -39,7 +41,6 @@ abstract class LivingBase extends Living{
 
     protected function initEntity(CompoundTag $nbt) : void{
         parent::initEntity($nbt);
-
         $this->setMaxHealth($health = $nbt->getInt("MaxHealth", $this->getDefaultMaxHealth()));
         if($nbt->getTag("HealF") instanceof FloatTag){
             $health = $nbt->getFloat("HealF");
@@ -49,7 +50,7 @@ abstract class LivingBase extends Living{
         }
 
         $this->setHealth($health);
-        $this->setImmobile();
+        //$this->setImmobile();
     }
 
     /** 상호작용을 위한 최소 거리 */
@@ -83,7 +84,8 @@ abstract class LivingBase extends Living{
         return true;
     }
 
-    public function interact(Player $player, Item $item) : bool{
+    public function interact(Player $player, Item $item) : bool
+    {
         return false;
     }
 
@@ -104,6 +106,19 @@ abstract class LivingBase extends Living{
         }
 
         return parent::onUpdate($currentTick);
+    }
+
+    protected function entityBaseTick(int $tickDiff = 1): bool
+    {
+        $location = $this->getLocation();
+        $myPlot = MyPlot::getInstance();
+
+        if ($myPlot->getPlotByPosition($location) === null
+            && ($location->getWorld()->getFolderName() === "CityBuild-1"
+            || $location->getWorld()->getFolderName() === "CityBuild-2"
+            || $location->getWorld()->getFolderName() === "test_01"))
+            $this->kill();
+        return parent::entityBaseTick($tickDiff);
     }
 
     public function isMovable() : bool{

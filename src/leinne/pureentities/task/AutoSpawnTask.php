@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace leinne\pureentities\task;
 
 use leinne\pureentities\entity\hostile\Creeper;
+use leinne\pureentities\entity\hostile\Husk;
 use leinne\pureentities\entity\hostile\Skeleton;
+use leinne\pureentities\entity\hostile\Stray;
 use leinne\pureentities\entity\hostile\Zombie;
 use leinne\pureentities\entity\neutral\CaveSpider;
 use leinne\pureentities\entity\neutral\IronGolem;
+use leinne\pureentities\entity\neutral\PolarBear;
 use leinne\pureentities\entity\neutral\Spider;
 use leinne\pureentities\entity\neutral\ZombifiedPiglin;
 use leinne\pureentities\entity\passive\Chicken;
@@ -41,8 +44,8 @@ class AutoSpawnTask extends Task
                 $pos->y = $player->getWorld()->getHighestBlockAt($pos->x += mt_rand(0, 1) ? $radX : -$radX, $pos->z += mt_rand(0, 1) ? $radZ : -$radZ) + 1;
 
                 $entityClasses = [
-                    [Cow::class, Pig::class, Sheep::class, Chicken::class, Mooshroom::class, IronGolem::class, Mooshroom::class, Rabbit::class],//, "Slime", "Wolf", "Ocelot", "Rabbit"],
-                    [Zombie::class, Creeper::class, Skeleton::class, Spider::class, CaveSpider::class, ZombifiedPiglin::class]//, "Enderman", "CaveSpider", "MagmaCube", "ZombieVillager", "Ghast", "Blaze"]
+                    [Cow::class, Pig::class, Sheep::class, Chicken::class, Mooshroom::class, IronGolem::class, Mooshroom::class, Rabbit::class, PolarBear::class],//, "Slime", "Wolf", "Ocelot", "Rabbit"],
+                    [Zombie::class, Creeper::class, Skeleton::class, Spider::class, CaveSpider::class, ZombifiedPiglin::class, Husk::class, Stray::class], //, "Enderman", "CaveSpider", "MagmaCube", "ZombieVillager", "Ghast", "Blaze"]
                 ];
 
                 /*if (($chunk = $player->getWorld()->getOrLoadChunkAtPosition($pos))) {

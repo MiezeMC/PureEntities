@@ -10,11 +10,10 @@ use pocketmine\entity\Entity;
 use pocketmine\entity\EntitySizeInfo;
 use pocketmine\item\Bucket;
 use pocketmine\item\Item;
-use pocketmine\item\ItemFactory;
-use pocketmine\item\ItemIds;
 use pocketmine\item\VanillaItems;
 use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
 use pocketmine\player\Player;
+use function mt_rand;
 
 class Cow extends Animal{
     use WalkEntityTrait;
@@ -60,7 +59,7 @@ class Cow extends Animal{
     public function getDrops() : array{
         return [
             VanillaItems::LEATHER()->setCount(mt_rand(0, 2)),
-            ItemFactory::getInstance()->get($this->isOnFire() ? ItemIds::STEAK : ItemIds::RAW_BEEF, 0, mt_rand(1, 3)),
+            $this->isOnFire() ? VanillaItems::STEAK()->setCount(mt_rand(1, 3)) : VanillaItems::RAW_BEEF()->setCount(mt_rand(1, 3))
         ];
     }
 

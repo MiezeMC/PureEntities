@@ -6,6 +6,7 @@ namespace leinne\pureentities;
 
 use leinne\pureentities\commands\SummonCommand;
 use leinne\pureentities\entity\ai\path\astar\AStarPathFinder;
+use leinne\pureentities\entity\hostile\Stray;
 use leinne\pureentities\entity\LivingBase;
 use leinne\pureentities\entity\neutral\CaveSpider;
 use leinne\pureentities\entity\neutral\IronGolem;
@@ -29,26 +30,29 @@ use leinne\pureentities\entity\Vehicle;
 use MyPlot\MyPlot;
 use MyPlot\Plot;
 use pocketmine\block\Block;
-use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\data\bedrock\EntityLegacyIds;
+use pocketmine\entity\effect\EffectInstance;
+use pocketmine\entity\effect\VanillaEffects;
 use pocketmine\entity\Entity;
 use pocketmine\entity\EntityDataHelper;
 use pocketmine\entity\EntityFactory;
+use pocketmine\entity\Living;
 use pocketmine\entity\Location;
 use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\entity\EntityDeathEvent;
 use pocketmine\event\entity\EntityTeleportEvent;
+use pocketmine\event\entity\ProjectileHitEntityEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\event\server\DataPacketReceiveEvent;
 use pocketmine\inventory\CreativeInventory;
 use pocketmine\item\Item;
-use pocketmine\item\ItemFactory;
 use pocketmine\item\ItemIdentifier;
-use pocketmine\item\ItemIds;
+use pocketmine\item\ItemTypeIds;
 use pocketmine\item\ItemUseResult;
+use pocketmine\item\VanillaItems;
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\AnimatePacket;
 use pocketmine\network\mcpe\protocol\InteractPacket;
@@ -487,6 +491,15 @@ class PureEntities extends PluginBase implements Listener
 
         if(!CreativeInventory::getInstance()->contains($item))
             CreativeInventory::getInstance()->add($item);
+    }
+
+    public function onProjectileHitEntity(ProjectileHitEntityEvent $ev): void
+    {
+        $sentBy = $ev->getEntity()->getOwningEntity();
+        $hitted = $ev->getEntityHit();
+
+        if ($sentBy instanceof Stray && $hitted instanceof Living && $hitted->getWorld()->getDifficulty() > 0)
+            $hitted->getEffects()->add(new EffectInstance(VanillaEffects::SLOWNESS(), 30));
     }
 
     //TODO: check golem block shape

@@ -65,7 +65,6 @@ class Zombie extends Monster implements Ageable{
             $this->broadcastAnimation(new ArmSwingAnimation($this));
 
             $target = $this->getTargetEntity();
-            var_dump($this->getResultDamage());
             $ev = new EntityDamageByEntityEvent($this, $target, EntityDamageEvent::CAUSE_ENTITY_ATTACK, $this->getResultDamage());
             $target->attack($ev);
 
@@ -124,7 +123,7 @@ class Zombie extends Monster implements Ageable{
 
         $time = $this->getWorld()->getTime();
         $loc = $this->getPosition();
-        if ($time > 0 && $time < 12000 && !$this->isOnFire() && $this->getWorld()->getBlockAt($loc->getFloorX(), $loc->getFloorY() + 1, $loc->getFloorZ()) instanceof Air && !$this->isUnderwater()) {
+        if ($time > 0 && $time < 12000 && $this->getWorld()->getBlockAt($loc->getFloorX(), $loc->getFloorY() + 1, $loc->getFloorZ()) instanceof Air && !$this->isUnderwater()) {
             $this->setOnFire(1);
             $hasUpdate = true;
         }

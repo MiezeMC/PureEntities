@@ -16,7 +16,7 @@ use function strtolower;
 abstract class SpawnEgg extends \pocketmine\item\SpawnEgg
 {
 
-    public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector): ItemUseResult
+    public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, array &$returnedItems): ItemUseResult
     {
         $final_pos = $blockReplace->getPosition()->add(0.5, 0, 0.5);
 

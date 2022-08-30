@@ -10,7 +10,7 @@ use pocketmine\entity\Entity;
 use pocketmine\inventory\CallbackInventoryListener;
 use pocketmine\inventory\Inventory;
 use pocketmine\item\Item;
-use pocketmine\item\ItemFactory;
+use pocketmine\item\VanillaItems;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\DoubleTag;
 use pocketmine\nbt\tag\ListTag;
@@ -60,14 +60,14 @@ abstract class Monster extends LivingBase
                 /** @var MonsterInventory $inv */
                 $itemStack = TypeConverter::getInstance()->coreItemStackToNet($inv->getItemInHand());
                 foreach($this->getViewers() as $viewer){
-                    $viewer->getNetworkSession()->sendDataPacket(MobEquipmentPacket::create($this->getId(), $itemStack, 0, ContainerIds::INVENTORY));
+                    $viewer->getNetworkSession()->sendDataPacket(MobEquipmentPacket::create($this->getId(), $itemStack, 0, ContainerIds::INVENTORY, WindowTypes::INVENTORY));
                 }
             },
             function(Inventory $inv, array $oldContents) : void{
                 /** @var MonsterInventory $inv */
                 $itemStack = TypeConverter::getInstance()->coreItemStackToNet($inv->getItemInHand());
                 foreach($this->getViewers() as $viewer){
-                    $viewer->getNetworkSession()->sendDataPacket(MobEquipmentPacket::create($this->getId(), $itemStack, 0, ContainerIds::INVENTORY));
+                    $viewer->getNetworkSession()->sendDataPacket(MobEquipmentPacket::create($this->getId(), $itemStack, 0, ContainerIds::INVENTORY, WindowTypes::INVENTORY));
                 }
             }
         ));
@@ -86,7 +86,7 @@ abstract class Monster extends LivingBase
     }
 
     public function getDefaultHeldItem() : Item{
-        return ItemFactory::air();
+        return VanillaItems::AIR();
     }
 
     public function getInventory() : MonsterInventory{

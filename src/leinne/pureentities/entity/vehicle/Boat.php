@@ -16,9 +16,6 @@ use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties;
 
 class Boat extends Vehicle{
 
-    /** @var float */
-    protected $gravity = 0.08;
-
     public static function getNetworkTypeId() : string{
         return EntityIds::BOAT;
     }
@@ -69,5 +66,21 @@ class Boat extends Vehicle{
 
     protected function onDeath() : void{
         $this->getWorld()->dropItem($this->location, VanillaItems::OAK_BOAT());
+    }
+
+    /**
+     * @return float
+     */
+    protected function getInitialDragMultiplier(): float
+    {
+        return 0;
+    }
+
+    /**
+     * @return float
+     */
+    protected function getInitialGravity(): float
+    {
+        return 0.08;
     }
 }

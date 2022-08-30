@@ -6,17 +6,17 @@ namespace leinne\pureentities\entity\neutral;
 
 use leinne\pureentities\entity\Monster;
 use leinne\pureentities\entity\ai\walk\WalkEntityTrait;
+use pocketmine\block\VanillaBlocks;
 use pocketmine\entity\animation\ArmSwingAnimation;
 use pocketmine\entity\Entity;
 use pocketmine\entity\EntitySizeInfo;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\entity\EntityDamageEvent;
-use pocketmine\item\ItemFactory;
-use pocketmine\item\ItemIds;
 use pocketmine\item\VanillaItems;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
 use pocketmine\player\Player;
+use function mt_rand;
 
 class IronGolem extends Monster{
     use WalkEntityTrait;
@@ -110,7 +110,7 @@ class IronGolem extends Monster{
     public function getDrops() : array{
         return [
             VanillaItems::IRON_INGOT()->setCount(mt_rand(3, 5)),
-            ItemFactory::getInstance()->get(ItemIds::POPPY, 0, mt_rand(0, 2)),
+            VanillaBlocks::POPPY()->asItem()->setCount(mt_rand(0, 2))
         ];
     }
 

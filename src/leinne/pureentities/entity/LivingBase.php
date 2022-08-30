@@ -9,7 +9,6 @@ use MyPlot\MyPlot;
 use pocketmine\entity\Entity;
 use pocketmine\entity\Living;
 use pocketmine\item\Item;
-use pocketmine\item\ItemIds;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\FloatTag;
@@ -19,9 +18,9 @@ use pocketmine\world\World;
 
 abstract class LivingBase extends Living{
 
-    protected $stepHeight = 0.6;
+    protected float $stepHeight = 0.6;
 
-    protected $jumpVelocity = 0.52;
+    protected float $jumpVelocity = 0.52;
 
     private float $speed = 1.0;
 

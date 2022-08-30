@@ -34,13 +34,17 @@ use pocketmine\block\Block;
 use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\data\bedrock\EntityLegacyIds;
+use pocketmine\entity\effect\EffectInstance;
+use pocketmine\entity\effect\VanillaEffects;
 use pocketmine\entity\Entity;
 use pocketmine\entity\EntityDataHelper;
 use pocketmine\entity\EntityFactory;
+use pocketmine\entity\Living;
 use pocketmine\entity\Location;
 use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\entity\EntityDeathEvent;
 use pocketmine\event\entity\EntityTeleportEvent;
+use pocketmine\event\entity\ProjectileHitEntityEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\event\player\PlayerQuitEvent;
@@ -513,6 +517,15 @@ class PureEntities extends PluginBase implements Listener
 
         if(!CreativeInventory::getInstance()->contains($item))
             CreativeInventory::getInstance()->add($item);
+    }
+
+    public function onProjectileHitEntity(ProjectileHitEntityEvent $ev): void
+    {
+        $sentBy = $ev->getEntity()->getOwningEntity();
+        $hitted = $ev->getEntityHit();
+
+        if ($sentBy instanceof Stray && $hitted instanceof Living && $hitted->getWorld()->getDifficulty() > 0)
+            $hitted->getEffects()->add(new EffectInstance(VanillaEffects::SLOWNESS(), 30));
     }
 
     //TODO: check golem block shape

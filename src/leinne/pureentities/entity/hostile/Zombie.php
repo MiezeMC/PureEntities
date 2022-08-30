@@ -124,7 +124,7 @@ class Zombie extends Monster implements Ageable{
 
         $time = $this->getWorld()->getTime();
         $loc = $this->getPosition();
-        if ($time > 0 && $time < 12000 && !$this->isOnFire() && $this->getWorld()->getBlockAt($loc->getFloorX(), $loc->getFloorY() + 1, $loc->getFloorZ()) instanceof Air && !$this->isUnderwater()) {
+        if ($time > 0 && $time < 12000 && $this->getWorld()->getBlockAt($loc->getFloorX(), $loc->getFloorY() + 1, $loc->getFloorZ()) instanceof Air && !$this->isUnderwater()) {
             $this->setOnFire(1);
             $hasUpdate = true;
         }

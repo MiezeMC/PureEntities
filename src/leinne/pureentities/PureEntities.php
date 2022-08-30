@@ -6,6 +6,8 @@ namespace leinne\pureentities;
 
 use leinne\pureentities\commands\SummonCommand;
 use leinne\pureentities\entity\ai\path\astar\AStarPathFinder;
+use leinne\pureentities\entity\hostile\Husk;
+use leinne\pureentities\entity\hostile\Stray;
 use leinne\pureentities\entity\LivingBase;
 use leinne\pureentities\entity\neutral\CaveSpider;
 use leinne\pureentities\entity\neutral\IronGolem;
@@ -133,6 +135,12 @@ class PureEntities extends PluginBase implements Listener
         $entityFactory->register(CaveSpider::class, function(World $world, CompoundTag $nbt) : CaveSpider{
             return new CaveSpider(EntityDataHelper::parseLocation($nbt, $world), $nbt);
         }, ["CaveSpider", "minecraft:cave_spider"]);
+        $entityFactory->register(Husk::class, function(World $world, CompoundTag $nbt) : Husk{
+            return new Husk(EntityDataHelper::parseLocation($nbt, $world), $nbt);
+        }, ["Husk", "minecraft:husk"]);
+        $entityFactory->register(Stray::class, function(World $world, CompoundTag $nbt) : Stray{
+            return new Stray(EntityDataHelper::parseLocation($nbt, $world), $nbt);
+        }, ["Stray", "minecraft:stray"]);
 
         //BlockFactory::register(new block\MonsterSpawner(new BlockIdentifier(BlockLegacyIds::MOB_SPAWNER, 0, null, tile\MonsterSpawner::class), "Monster Spawner"), true);
 
@@ -243,6 +251,19 @@ class PureEntities extends PluginBase implements Listener
         }), true);
         self::$spawnEggs[$caveSpider->getMeta()] = $caveSpider;
 
+        $itemFactory->register(($husk = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::HUSK), "Husk Spawn Egg") extends SpawnEgg{
+            protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
+                return new Husk(Location::fromObject($pos, $world, $yaw, $pitch));
+            }
+        }), true);
+
+        $itemFactory->register(($stray = new class(new ItemIdentifier(ItemIds::SPAWN_EGG, EntityLegacyIds::STRAY), "Stray Spawn Egg") extends SpawnEgg{
+            protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
+                return new Stray(Location::fromObject($pos, $world, $yaw, $pitch));
+            }
+        }), true);
+
+
         $creaInv = CreativeInventory::getInstance();
         $creaInv->remove($skeleton);
         $creaInv->remove($zombie);
@@ -257,6 +278,8 @@ class PureEntities extends PluginBase implements Listener
         $creaInv->remove($rabbit);
         $creaInv->remove($polarBear);
         $creaInv->remove($caveSpider);
+        $creaInv->remove($husk);
+        $creaInv->remove($stray);
 
         $creaInv->add($skeleton);
         $creaInv->add($zombie);
@@ -271,6 +294,9 @@ class PureEntities extends PluginBase implements Listener
         $creaInv->add($rabbit);
         $creaInv->add($polarBear);
         $creaInv->add($caveSpider);
+        $creaInv->add($husk);
+        $creaInv->add($stray);
+
 
         $this->saveDefaultConfig();
         $data = $this->getConfig()->getAll();
